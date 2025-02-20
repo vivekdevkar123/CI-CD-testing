@@ -11,26 +11,20 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 18  # Adjust based on your project
-
-      - name: Cache node_modules
-        uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
+          node-version: 18
 
       - name: Install dependencies
         run: npm install
+        working-directory: cicddemo  # Adjust if your package.json is in a subfolder
 
       - name: Build project
-        run: npm run build  # Ensure this is the correct build command for your framework
+        run: npm run build
+        working-directory: cicddemo
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -39,13 +33,5 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Ensure AWS CLI is installed
-        run: |
-          if ! command -v aws &> /dev/null
-          then
-            echo "AWS CLI not found, installing..."
-            sudo apt update && sudo apt install -y awscli
-          fi
-
       - name: Deploy to S3
-        run: aws s3 sync ./build s3://${{ secrets.S3_BUCKET_NAME }} --delete
+        run: aws s3 sync frontend/build s3://${{ secrets.S3_BUCKET_NAME }} --delete
